@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AgriSense — Crop Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #1a3a1f;
+    --green-mid:  #2d6a4f;
+    --green-bright: #52b788;
+    --gold:       #d4a017;
+    --gold-light: #f4d03f;
+    --cream:      #f8f4e9;
+    --earth:      #8b5e3c;
+    --bg:         #0f1e12;
+    --card:       #162219;
+    --card2:      #1c2e1e;
+    --text:       #e8f5ea;
+    --muted:      #7fad88;
+    --border:     rgba(82,183,136,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(45,106,79,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 80%, rgba(212,160,23,0.08) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    background: rgba(15,30,18,0.85);
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 800;
+    color: var(--green-bright);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--gold); }
+  .badge {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--muted); text-transform: uppercase;
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+  }
+
+  /* ── Main layout ── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1100px; margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.8rem;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.8rem;
+    backdrop-filter: blur(6px);
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem; font-weight: 600;
+    color: var(--green-bright); margin-bottom: 1.4rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .card-title .icon { font-size: 1.2rem; }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 1.2rem; }
+  label {
+    display: block;
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.45rem;
+  }
+  input, select {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--green-bright);
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2352b788' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
+
+  .btn {
+    width: 100%; padding: 0.85rem;
+    background: linear-gradient(135deg, var(--green-mid), var(--green-bright));
+    border: none; border-radius: 12px;
+    color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 1rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.03em;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(82,183,136,0.25);
+    margin-top: 0.4rem;
+  }
+  .btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(82,183,136,0.35); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── Right column ── */
+  .right-col { display: flex; flex-direction: column; gap: 1.4rem; }
+
+  /* ── Crop Result ── */
+  .result-card {
+    background: linear-gradient(135deg, var(--card) 0%, rgba(45,106,79,0.2) 100%);
+    border: 1px solid rgba(82,183,136,0.3);
+    border-radius: 18px; padding: 2rem;
+    display: none; animation: fadeUp 0.5s ease;
+  }
+  .result-card.show { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .crop-hero {
+    display: flex; align-items: center; gap: 1.2rem;
+    margin-bottom: 1.4rem;
+  }
+  .crop-emoji { font-size: 3.5rem; line-height: 1; }
+  .crop-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 800;
+    color: var(--text); line-height: 1.1;
+  }
+  .crop-tamil {
+    font-size: 0.85rem; color: var(--gold);
+    margin-top: 0.25rem; font-weight: 500;
+  }
+  .recommended-tag {
+    display: inline-block;
+    background: rgba(82,183,136,0.18);
+    color: var(--green-bright);
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    border-radius: 20px; padding: 0.25rem 0.75rem;
+    border: 1px solid rgba(82,183,136,0.3);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Stats row ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.8rem; margin-bottom: 1.2rem;
+  }
+  .stat-box {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 0.85rem 0.7rem;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--green-bright); line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 0.68rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 0.35rem;
+  }
+
+  /* ── Fertilizer ── */
+  .fertilizer-box {
+    background: rgba(212,160,23,0.08);
+    border: 1px solid rgba(212,160,23,0.2);
+    border-radius: 12px; padding: 1rem 1.1rem;
+    display: flex; align-items: flex-start; gap: 0.7rem;
+  }
+  .fertilizer-box .f-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .fertilizer-box .f-label {
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.25rem;
+  }
+  .fertilizer-box .f-text { font-size: 0.88rem; color: var(--text); line-height: 1.5; }
+
+  /* ── Weather + Soil cards ── */
+  .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+
+  .mini-stat { margin-bottom: 0.9rem; }
+  .mini-stat:last-child { margin-bottom: 0; }
+  .mini-row { display: flex; justify-content: space-between; align-items: center; }
+  .mini-key { font-size: 0.8rem; color: var(--muted); }
+  .mini-val { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+
+  .progress-bar {
+    height: 4px; background: var(--card2);
+    border-radius: 4px; margin-top: 0.35rem; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--green-mid), var(--green-bright));
+    transition: width 0.8s ease;
+  }
+
+  /* ── Loading state ── */
+  .loading { display: none; text-align: center; padding: 2rem; }
+  .loading.show { display: block; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--green-bright);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error-box {
+    display: none; background: rgba(200,60,60,0.12);
+    border: 1px solid rgba(200,60,60,0.3);
+    border-radius: 12px; padding: 1rem 1.2rem;
+    color: #f87171; font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+  .error-box.show { display: block; animation: fadeUp 0.3s ease; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--muted);
+  }
+  .empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-state p { font-size: 0.9rem; line-height: 1.7; }
+
+  /* ── Soil NPK badge ── */
+  .npk-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .npk-chip {
+    font-size: 0.78rem; font-weight: 600;
+    border-radius: 8px; padding: 0.3rem 0.7rem;
+    background: var(--card2); border: 1px solid var(--border);
+  }
+  .npk-chip.n { border-color: rgba(52,211,153,0.4); color: #34d399; }
+  .npk-chip.p { border-color: rgba(251,191,36,0.4); color: #fbbf24; }
+  .npk-chip.k { border-color: rgba(167,139,250,0.4); color: #a78bfa; }
+  .npk-chip.ph{ border-color: rgba(96,165,250,0.4);  color: #60a5fa; }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .mini-grid { grid-template-columns: 1fr; }
+    header { padding: 1rem 1.2rem; }
+    main { padding: 1.5rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Agri<span>Sense</span></div>
+  <div class="badge">🌱 Crop Intelligence</div>
+</header>
+
+<main>
+  <!-- ── Left: Input Panel ── -->
+  <div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🗺️</span> Location & Soil</div>
+
+      <div class="form-group">
+        <label>City / District</label>
+        <input type="text" id="city" placeholder="e.g. Tiruppur, Chennai, Coimbatore" />
+      </div>
+
+      <div class="form-group">
+        <label>Soil Type</label>
+        <select id="soil_type">
+          <option value="" disabled selected>Select soil type…</option>
+          <option value="Alluvial">Alluvial</option>
+          <option value="Black">Black</option>
+          <option value="Red">Red</option>
+          <option value="Clay">Clay</option>
+          <option value="Loamy">Loamy</option>
+          <option value="Sandy">Sandy</option>
+        </select>
+      </div>
+
+      <button class="btn" id="analyzeBtn" onclick="analyze()">
+        Analyse &amp; Recommend Crop →
+      </button>
+
+      <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <!-- Soil Info Preview -->
+    <div class="card" style="margin-top:1.4rem;" id="soilPreview">
+      <div class="card-title"><span class="icon">🧪</span> Soil Nutrients Preview</div>
+      <div id="soilNpk" style="color:var(--muted);font-size:0.88rem;">Select a soil type to see nutrient levels.</div>
+    </div>
+  </div>
+
+  <!-- ── Right: Results ── -->
+  <div class="right-col">
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div style="color:var(--muted);font-size:0.9rem;">Fetching weather &amp; running model…</div>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" id="emptyState">
+      <div class="big">🌾</div>
+      <p>Enter your city and soil type,<br>then click <strong style="color:var(--green-bright)">Analyse</strong> to get your personalised crop recommendation.</p>
+    </div>
+
+    <!-- Result -->
+    <div class="result-card" id="resultCard">
+      <div class="recommended-tag">✦ AI Recommended</div>
+      <div class="crop-hero">
+        <div class="crop-emoji" id="cropEmoji">🌾</div>
+        <div>
+          <div class="crop-name" id="cropName">—</div>
+          <div class="crop-tamil" id="cropTamil">—</div>
+        </div>
+      </div>
+
+      <!-- Weather stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="statTemp">—</div>
+          <div class="stat-lbl">Temp °C</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statHum">—</div>
+          <div class="stat-lbl">Humidity %</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statRain">—</div>
+          <div class="stat-lbl">Rainfall mm</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statPh">—</div>
+          <div class="stat-lbl">Soil pH</div>
+        </div>
+      </div>
+
+      <!-- Fertilizer -->
+      <div class="fertilizer-box">
+        <div class="f-icon">🌿</div>
+        <div>
+          <div class="f-label">Recommended Fertilizer</div>
+          <div class="f-text" id="fertText">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather + Soil detail -->
+    <div class="mini-grid" id="detailGrid" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="icon">🌤️</span> Weather</div>
+        <div class="mini-stat">
+          <div class="mini-row"><span class="mini-key">Location</span><span class="mini-val" id="dCity">—</span></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-row"><span class="mini-key">Temperature</span><span class="mini-val" id="dTemp">—</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="dTempBar" style="width:0%"></div></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-row"><span class="mini-key">Humidity</span><span class="mini-val" id="dHum">—</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="dHumBar" style="width:0%"></div></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-row"><span class="mini-key">Rainfall</span><span class="mini-val" id="dRain">—</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="dRainBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🪨</span> Soil Profile</div>
+        <div class="mini-stat">
+          <div class="mini-row"><span class="mini-key">Type</span><span class="mini-val" id="dSoil">—</span></div>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">Nutrient levels</div>
+          <div class="npk-row" id="dNpk"></div>
+        </div>
+        <div class="mini-stat" style="margin-top:1rem;">
+          <div class="mini-row"><span class="mini-key">pH</span><span class="mini-val" id="dph">—</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="dphBar" style="width:0%;background:linear-gradient(90deg,#60a5fa,#818cf8)"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const SOIL_PROPERTIES = ["Alluvial", "Black", "Red", "Clay", "Loamy", "Sandy"];
+
+// Preview soil on change
+document.getElementById('soil_type').addEventListener('change', function() {
+  const map = {
+    'Alluvial': {N:40,P:60,K:50,ph:6.5},
+    'Black':    {N:30,P:40,K:60,ph:7.2},
+    'Red':      {N:20,P:30,K:40,ph:6.0},
+    'Clay':     {N:50,P:50,K:40,ph:7.0},
+    'Loamy':    {N:60,P:50,K:50,ph:6.5},
+    'Sandy':    {N:10,P:15,K:20,ph:5.5}
+  };
+  const d = map[this.value];
+  if (!d) return;
+  document.getElementById('soilNpk').innerHTML = `
+    <div class="npk-row">
+      <span class="npk-chip n">N: ${d.N}</span>
+      <span class="npk-chip p">P: ${d.P}</span>
+      <span class="npk-chip k">K: ${d.K}</span>
+      <span class="npk-chip ph">pH: ${d.ph}</span>
+    </div>
+    <div style="margin-top:0.7rem;font-size:0.8rem;color:var(--muted);line-height:1.6;">
+      N = Nitrogen &nbsp;|&nbsp; P = Phosphorus &nbsp;|&nbsp; K = Potassium
+    </div>`;
+});
+
+async function analyze() {
+  const city      = document.getElementById('city').value.trim();
+  const soil_type = document.getElementById('soil_type').value;
+  const btn       = document.getElementById('analyzeBtn');
+  const errBox    = document.getElementById('errorBox');
+
+  errBox.classList.remove('show');
+  if (!city)      { showErr('Please enter a city name.'); return; }
+  if (!soil_type) { showErr('Please select a soil type.'); return; }
+
+  // UI: show loading
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('detailGrid').style.display   = 'none';
+
+  try {
+    const res  = await fetch('/recommend', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({city, soil_type})
+    });
+    const data = await res.json();
+
+    if (!res.ok) { showErr(data.error || 'An error occurred.'); return; }
+
+    // Populate result
+    document.getElementById('cropEmoji').textContent = data.emoji;
+    document.getElementById('cropName').textContent  = data.crop;
+    document.getElementById('cropTamil').textContent = data.tamil_crop;
+    document.getElementById('fertText').textContent  = data.fertilizer;
+
+    const w = data.weather;
+    document.getElementById('statTemp').textContent = w.temperature + '°';
+    document.getElementById('statHum').textContent  = w.humidity + '%';
+    document.getElementById('statRain').textContent = w.rainfall;
+    document.getElementById('statPh').textContent   = data.soil.ph;
+
+    // Detail panel
+    document.getElementById('dCity').textContent  = w.city;
+    document.getElementById('dTemp').textContent  = w.temperature + ' °C';
+    document.getElementById('dHum').textContent   = w.humidity + ' %';
+    document.getElementById('dRain').textContent  = w.rainfall + ' mm';
+    document.getElementById('dSoil').textContent  = data.soil.type;
+    document.getElementById('dph').textContent    = data.soil.ph;
+
+    // Progress bars
+    setTimeout(() => {
+      document.getElementById('dTempBar').style.width  = Math.min(w.temperature/50*100,100) + '%';
+      document.getElementById('dHumBar').style.width   = w.humidity + '%';
+      document.getElementById('dRainBar').style.width  = Math.min(w.rainfall/300*100,100) + '%';
+      document.getElementById('dphBar').style.width    = (data.soil.ph / 14 * 100) + '%';
+    }, 100);
+
+    // NPK chips
+    const s = data.soil;
+    document.getElementById('dNpk').innerHTML = `
+      <span class="npk-chip n">N: ${s.N}</span>
+      <span class="npk-chip p">P: ${s.P}</span>
+      <span class="npk-chip k">K: ${s.K}</span>`;
+
+    // Show panels
+    document.getElementById('resultCard').classList.add('show');
+    document.getElementById('detailGrid').style.display = 'grid';
+
+  } catch(e) {
+    showErr('Network error. Please try again.');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+function showErr(msg) {
+  const b = document.getElementById('errorBox');
+  b.textContent = '⚠ ' + msg;
+  b.classList.add('show');
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+// Enter key to submit
+document.getElementById('city').addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/recommend"
+  to = "/.netlify/functions/recommend"
+  status = 200
+
+[[redirects]]
+  from = "/soil_types"
+  to = "/.netlify/functions/soil_types"
+  status = 200
