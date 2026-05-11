@@ -474,9 +474,16 @@ async function analyze() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({city, soil_type})
     });
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch(e) {
+      showErr(`Server Error: ${res.status} ${res.statusText}`);
+      return;
+    }
+
     if (!res.ok) { 
-      showErr(data.error || `HTTP Error ${res.status}`); 
+      showErr(data.error || `Error ${res.status}`); 
       return; 
     }
 
