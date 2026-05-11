@@ -3,7 +3,7 @@ import joblib
 import numpy as np
 import os
 
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__)
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.pkl')
 model = None
