@@ -57,6 +57,7 @@ CROP_EMOJI = {
 }
 
 @app.route('/')
+@app.route('/index.html')
 def index():
     return render_template('index.html',
                            soil_types=list(SOIL_PROPERTIES.keys()))
