@@ -475,8 +475,10 @@ async function analyze() {
       body: JSON.stringify({city, soil_type})
     });
     const data = await res.json();
-
-    if (!res.ok) { showErr(data.error || 'An error occurred.'); return; }
+    if (!res.ok) { 
+      showErr(data.error || `HTTP Error ${res.status}`); 
+      return; 
+    }
 
     // Populate result
     document.getElementById('cropEmoji').textContent = data.emoji;
@@ -518,7 +520,7 @@ async function analyze() {
     document.getElementById('detailGrid').style.display = 'grid';
 
   } catch(e) {
-    showErr('Network error. Please try again.');
+    showErr('Network error: ' + e.message);
   } finally {
     btn.disabled = false;
     document.getElementById('loading').classList.remove('show');
