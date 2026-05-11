@@ -62,9 +62,15 @@ def index():
     return render_template('index.html',
                            soil_types=list(SOIL_PROPERTIES.keys()))
 
-@app.route('/recommend', methods=['POST'], strict_slashes=False)
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"})
+
+@app.route('/recommend', methods=['GET', 'POST'], strict_slashes=False)
 def recommend():
-    print("Recommend endpoint hit!")
+    if request.method == 'GET':
+        return jsonify({"message": "Please use POST to recommend crops."})
+    print("Recommend endpoint hit via POST!")
     if model is None:
         return jsonify({'error': 'Model not loaded. Please run train_model.py first.'}), 500
 

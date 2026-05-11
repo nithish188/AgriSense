@@ -469,6 +469,7 @@ async function analyze() {
   document.getElementById('detailGrid').style.display   = 'none';
 
   try {
+    console.log("Calling endpoint: /recommend");
     const res  = await fetch('/recommend', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
